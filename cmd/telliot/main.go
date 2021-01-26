@@ -36,7 +36,7 @@ func createLogger(logConfig map[string]string, level string) (log.Logger, error)
 	return logger, nil
 }
 
-func createTellorVariables(ctx context.Context, cfg *config.Config) (rpc.ETHClient, *contracts.Tellor, *rpc.Account, error) {
+func createTellorVariables(ctx context.Context, cfg *config.Config) (contracts.ETHClient, *contracts.Tellor, *rpc.Account, error) {
 
 	if !cfg.EnablePoolWorker {
 
@@ -46,7 +46,7 @@ func createTellorVariables(ctx context.Context, cfg *config.Config) (rpc.ETHClie
 			return nil, nil, nil, errors.Wrap(err, "create rpc client instance")
 		}
 
-		contract, err := contracts.NewTellor(cfg, client)
+		contract, err := contracts.NewTellor(client)
 		if err != nil {
 			return nil, nil, nil, errors.Wrap(err, "create tellor master instance")
 		}
@@ -106,26 +106,6 @@ func migrateAndOpenDB(cfg *config.Config) (db.DB, error) {
 	}
 
 	return DB, nil
-}
-
-func createProxy(cfg *config.Config, DB db.DB) (db.DataServerProxy, error) {
-	var dataProxy db.DataServerProxy
-	if cfg.Mine.RemoteDBHost != "" {
-		proxy, err := db.OpenRemoteDB(cfg, DB)
-		if err != nil {
-			return nil, errors.Wrapf(err, "open remote DB instance")
-
-		}
-		dataProxy = proxy
-	} else {
-		proxy, err := db.OpenLocalProxy(DB)
-		if err != nil {
-			return nil, errors.Wrapf(err, "opening local DB instance:")
-
-		}
-		dataProxy = proxy
-	}
-	return dataProxy, nil
 }
 
 var cli struct {

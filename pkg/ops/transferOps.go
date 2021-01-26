@@ -26,7 +26,7 @@ import (
 func prepareTransfer(
 	ctx context.Context,
 	logger log.Logger,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	instance *proxy.TellorGetters,
 	account *rpc.Account,
 	amt *big.Int,
@@ -53,7 +53,7 @@ func prepareTransfer(
 func Transfer(
 	ctx context.Context,
 	logger log.Logger,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	contract *contracts.Tellor,
 	account *rpc.Account,
 	toAddress common.Address,
@@ -75,7 +75,7 @@ func Transfer(
 func Approve(
 	ctx context.Context,
 	logger log.Logger,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	contract *contracts.Tellor,
 	account *rpc.Account,
 	spender common.Address,
@@ -94,7 +94,7 @@ func Approve(
 	return nil
 }
 
-func Balance(ctx context.Context, logger log.Logger, client rpc.ETHClient, getterInstance *proxy.TellorGetters, addr common.Address) error {
+func Balance(ctx context.Context, logger log.Logger, client contracts.ETHClient, getterInstance *proxy.TellorGetters, addr common.Address) error {
 	ethBalance, err := client.BalanceAt(ctx, addr, nil)
 	if err != nil {
 		return errors.Wrap(err, "get eth balance")

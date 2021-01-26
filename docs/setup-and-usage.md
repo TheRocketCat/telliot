@@ -56,9 +56,13 @@ cp configs/config.json .local/configs/$NAME/config.json # Edit the file after th
 cp configs/indexes.json .local/configs/$NAME/indexes.json
 cp configs/manualData.json .local/configs/$NAME/manualData.json
 # Add the configs.
-kubectl create configmap telliot-$NAME --from-file=.local/configs/$NAME/config.json  --from-file=.local/configs/$NAME/indexes.json --from-file=.local/configs/$NAME/manualData.json -o yaml --dry-run=client | kubectl apply -f -
+kubectl create configmap telliot-$NAME \
+  --from-file=.local/configs/$NAME/config.json \
+  --from-file=.local/configs/$NAME/indexes.json \
+  --from-file=.local/configs/$NAME/manualData.json \
+  -o yaml --dry-run=client | kubectl apply -f -
 
-# Copy the deployment and create it.
+# Copy the deployment and run it.
 cp configs/manifests/telliot.yml .local/configs/$NAME/telliot.yml
 sed -i "s/telliot-main/telliot-$NAME/g" .local/configs/$NAME/telliot.yml
 kubectl apply -f .local/configs/$NAME/telliot.yml
@@ -280,7 +284,6 @@ Edit `config1.json` to include the following:
 ```bash
 {
     "publicAddress": "0xE037EC8EC9ec423826750853899394dE7F024fee",
-    "contractAddress": "0x7DdC408C0Cd13D3543156AE2bc5772C56E91AA0f",
     "databaseURL":"http://localhost7545",
     "serverWhitelist": [
                 "0xE037EC8EC9ec423826750853899394dE7F024fee",
@@ -296,11 +299,6 @@ Edit `config1.json` to include the following:
     "requestData":1,
     "gasMultiplier": 1,
     "gasMax":10,
-    "gpuConfig":{
-      "default":{
-        "disabled": true
-      }
-    },
     "trackers": [
           "balance",
           "currentVariables",

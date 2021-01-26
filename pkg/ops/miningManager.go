@@ -49,7 +49,7 @@ type MiningMgr struct {
 	exitCh          chan os.Signal
 	logger          log.Logger
 	Running         bool
-	ethClient       rpc.ETHClient
+	ethClient       contracts.ETHClient
 	group           *pow.MiningGroup
 	tasker          WorkSource
 	solHandler      SolutionSink
@@ -86,8 +86,7 @@ func CreateMiningManager(
 	if err != nil {
 		return nil, errors.Wrap(err, "creating client")
 	}
-	contractAddress := common.HexToAddress(cfg.ContractAddress)
-	getter, err := proxy.NewTellorGetters(contractAddress, client)
+	getter, err := contracts.NewTellorGetters(client)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting addresses")
 	}
@@ -388,7 +387,7 @@ func (mgr *MiningMgr) saveGasUsed(ctx context.Context, tx *types.Transaction) {
 		}
 
 		txID := tellorCommon.PriceTXs + slotNum.String()
-		_, err = mgr.database.Put(txID, gasUsed.Bytes())
+		err = mgr.database.Put(txID, gasUsed.Bytes())
 		if err != nil {
 			level.Error(mgr.logger).Log("msg", "saving transaction cost", "err", err)
 		}
@@ -407,7 +406,7 @@ func (mgr *MiningMgr) profit() (int64, error) {
 		return 0, errors.Wrap(err, "getting TX cost")
 	}
 	if gasUsed.Int64() == 0 {
-		level.Debug(mgr.logger).Log("msg", "profit checking no data for gas used", "slot", slotNum)
+		level.Debug(mgr.logger).Log("msg", "profit checking:no data for gas used", "slot", slotNum)
 		return -1, nil
 	}
 	gasPrice, err := mgr.ethClient.SuggestGasPrice(context.Background())

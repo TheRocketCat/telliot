@@ -34,7 +34,7 @@ import (
 func Dispute(
 	ctx context.Context,
 	logger log.Logger,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	contract *contracts.Tellor,
 	account *rpc.Account,
 	requestId *big.Int,
@@ -79,7 +79,7 @@ func Dispute(
 func Vote(
 	ctx context.Context,
 	logger log.Logger,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	contract *contracts.Tellor,
 	account *rpc.Account,
 	disputeId *big.Int,
@@ -110,7 +110,7 @@ func Vote(
 
 func getNonceSubmissions(
 	ctx context.Context,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	contract *contracts.Tellor,
 	valueBlock *big.Int,
 	dispute *master.TellorDisputeNewDispute,
@@ -188,7 +188,7 @@ func getNonceSubmissions(
 func List(
 	ctx context.Context,
 	logger log.Logger,
-	client rpc.ETHClient,
+	client contracts.ETHClient,
 	contract *contracts.Tellor,
 	account *rpc.Account,
 ) error {

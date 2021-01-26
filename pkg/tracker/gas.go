@@ -13,15 +13,15 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/common"
+	"github.com/tellor-io/telliot/pkg/contracts"
 	"github.com/tellor-io/telliot/pkg/db"
-	"github.com/tellor-io/telliot/pkg/rpc"
 )
 
 // GasTracker is the struct that maintains the latest gasprices.
 // note the prices are actually stored in the DB.
 type GasTracker struct {
-	db     db.DB
-	client rpc.ETHClient
+	db     db.DataServerProxy
+	client contracts.ETHClient
 	logger log.Logger
 }
 
@@ -36,7 +36,7 @@ func (b *GasTracker) String() string {
 	return "GasTracker"
 }
 
-func NewGasTracker(logger log.Logger, db db.DB, client rpc.ETHClient) *GasTracker {
+func NewGasTracker(logger log.Logger, db db.DataServerProxy, client contracts.ETHClient) *GasTracker {
 	return &GasTracker{
 		db:     db,
 		client: client,
