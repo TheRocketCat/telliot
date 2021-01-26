@@ -5,14 +5,17 @@ package util
 
 import (
 	"bytes"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var httpFetchLog = NewLogger("util", "HTTPFetchWithRetries")
+var httpFetchLog = log.With(util.SetupLogger("debug"), "util", "HTTPFetchWithRetries")
 
 const (
 	// GET is a GET request type.
@@ -35,7 +38,11 @@ func HTTPWithRetries(req *HTTPFetchRequest) ([]byte, error) {
 }
 
 func _recReq(req *HTTPFetchRequest, expiration time.Time) ([]byte, error) {
-	httpFetchLog.Debug("Fetch request will expire at: %v (timeout: %v)", expiration, req.Timeout)
+	level.Debug(httpFetchLog).Log(
+		"msg", "fetch request will expire",
+		"expiration", expiration,
+		"timeout", req.Timeout,
+	)
 	var r *http.Response
 	var err error
 	if req.Method == GET {
@@ -45,24 +52,33 @@ func _recReq(req *HTTPFetchRequest, expiration time.Time) ([]byte, error) {
 	}
 	if err != nil {
 		// Log local non-timeout errors for now.
-		httpFetchLog.Warn("Problem fetching data from: %s. %v", req.QueryURL, err)
+		level.Warn(httpFetchLog).Log(
+			"msg", "problem fetching data",
+			"queryURL", req.QueryURL,
+			"err", err,
+		)
 		now := time.Now()
 		if now.After(expiration) {
-			httpFetchLog.Error("Timeout expired, not retrying query and passing error up")
+			level.Error(httpFetchLog).Log("msg", "timeout expired, not retrying query and passing error up")
 			return nil, err
 		}
 		// FIXME: should this be configured as fetch error sleep duration?
 		time.Sleep(500 * time.Millisecond)
 
 		// Try again.
-		httpFetchLog.Warn("Trying fetch again...")
+		level.Warn(httpFetchLog).Log("msg", "trying to fetch again")
 		return _recReq(req, expiration)
 	}
 
 	data, _ := ioutil.ReadAll(r.Body)
 
 	if r.StatusCode < 200 || r.StatusCode > 299 {
-		httpFetchLog.Warn("Response from fetching  %s. Response code: %d, payload: %s", req.QueryURL, r.StatusCode, data)
+		level.Warn(httpFetchLog).Log(
+			"msg", "response from fetching",
+			"queryURL", req.QueryURL,
+			"statusCode", r.StatusCode,
+			"payload", data,
+		)
 		// Log local non-timeout errors for now.
 		now := time.Now()
 		if now.After(expiration) {

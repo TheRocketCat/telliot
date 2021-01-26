@@ -308,7 +308,7 @@ func (i *remoteImpl) Verify(hash []byte, timestamp int64, sig []byte) error {
 		}
 		level.Debug(i.logger).Log(
 			"msg", "time of last request",
-			"compared", expr,
+			"comparing", expr,
 			"to", now,
 		)
 

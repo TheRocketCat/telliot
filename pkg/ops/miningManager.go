@@ -77,7 +77,7 @@ func CreateMiningManager(
 	account *rpc.Account,
 ) (*MiningMgr, error) {
 
-	group, err := pow.SetupMiningGroup(logger, cfg, exitCh)
+	group, err := pow.SetupMiningGroup(cfg, logger, exitCh)
 	if err != nil {
 		return nil, errors.Wrap(err, "setup miners")
 	}

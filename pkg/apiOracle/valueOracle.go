@@ -11,12 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var logger = util.NewLogger("apiOracle", "valueOracle")
+var logger = log.With(util.SetupLogger("debug"), "apiOracle", "valueOracle")
 
 // maps symbol to a time window of values.
 var valueHistory map[string]*Window
@@ -67,7 +69,7 @@ func writeOutHistory() {
 	// this function is single threaded, but we need mutex to access multithreaded history.
 	valueHistoryMutex.Unlock()
 	if err != nil {
-		logger.Error("failed to marshal PSR values: %s", err.Error())
+		level.Error(logger).Log("msg", "failed to marshal PSR values", "err", err.Error())
 		return
 	}
 
@@ -76,13 +78,17 @@ func writeOutHistory() {
 	psrSavedDataTmp := psrSavedData + ".tmp"
 	err = ioutil.WriteFile(psrSavedDataTmp, data, 0644)
 	if err != nil {
-		logger.Error("failed to write out PSR values to %s: %s", psrSavedDataTmp, err.Error())
+		level.Error(logger).Log(
+			"msg", "failed to write out PSR values",
+			"psrSavedDataTmp", psrSavedDataTmp,
+			"err", err.Error(),
+		)
 		return
 	}
 	// Rename tmp file to old file (should be atomic on most modern OS)
 	err = os.Rename(psrSavedDataTmp, psrSavedData)
 	if err != nil {
-		logger.Error("failed move new PSR save onto old: %s", err.Error())
+		level.Error(logger).Log("msg", "failed move new PSR save onto old", "err", err.Error())
 		return
 	}
 }

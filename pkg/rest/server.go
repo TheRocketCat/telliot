@@ -6,15 +6,16 @@ package rest
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/db"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var serverLog = util.NewLogger("rest", "Server")
+var serverLog = log.With(util.SetupLogger("debug"), "rest", "Server")
 
 // Server wraps http server with pre-configured paths.
 type Server struct {
@@ -41,7 +42,7 @@ func Create(ctx context.Context, proxy db.DataServerProxy, host string, port uin
 // Start the server listening for incoming requests.
 func (s *Server) Start() {
 	go func() {
-		serverLog.Info("Starting server on %+v\n", s.server.Addr)
+		level.Info(serverLog).Log("msg", "starting server", "addr", s.server.Addr)
 		// returns ErrServerClosed on graceful close
 		if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
 			// NOTE: there is a chance that next line won't have time to run,
@@ -49,13 +50,13 @@ func (s *Server) Start() {
 			// code with race conditions like these for production. see post
 			// comments below on more discussion on how to handle this.
 			// TODO remove this log and return error instead.
-			log.Fatalf("ListenAndServe(): %s", err)
+			level.Error(serverLog).Log("msg", "ListenAndServe()", "err", err)
 		}
 	}()
 }
 
 // Stop stops the server listening.
 func (s *Server) Stop() error {
-	serverLog.Info("Stopping server")
+	level.Info(serverLog).Log("msg", "stopping server")
 	return s.server.Close()
 }
