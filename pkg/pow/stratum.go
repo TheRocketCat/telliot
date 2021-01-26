@@ -6,10 +6,11 @@ package pow
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"net"
 	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
@@ -32,7 +33,7 @@ type StratumClient struct {
 	socket  net.Conn
 	seq     uint64
 	timeout time.Duration
-	log     *util.Logger
+	logger  log.Logger
 	msgChan chan *StratumResponse
 	running bool
 }
@@ -46,9 +47,9 @@ func StratumConnect(host string, msgChan chan *StratumResponse) (*StratumClient,
 	}
 	client.seq = 0
 	client.msgChan = msgChan
-	client.log = util.NewLogger("pow", "Pool")
+	client.logger = log.With(util.SetupLogger("debug"), "pow", "Pool")
 	client.SetTimeout(10)
-	client.log.Info("connect to pool success")
+	level.Info(client.logger).Log("msg", "connect to pool success")
 	client.running = true
 	go client.Listen()
 	return &client, nil
@@ -61,17 +62,17 @@ func (c *StratumClient) SetTimeout(timeout int64) {
 func (c *StratumClient) Listen() {
 	defer func() {
 		if err := c.socket.Close(); err != nil {
-			fmt.Println("error closing the connection", err)
+			level.Error(c.logger).Log("msg", "error closing the connection", "err", err)
 		}
 	}()
 	if err := c.socket.SetReadDeadline(time.Time{}); err != nil {
-		fmt.Println("error setting connection deadline", err)
+		level.Error(c.logger).Log("msg", "error setting connection deadline", "err", err)
 	}
 
 	for {
 		result, err := bufio.NewReader(c.socket).ReadString('\n')
 		if err != nil {
-			c.log.Error("failed to read: %s", err.Error())
+			level.Error(c.logger).Log("msg", "failed to read", "err", err.Error())
 			c.running = false
 			break
 		}
@@ -80,7 +81,7 @@ func (c *StratumClient) Listen() {
 		// c.log.Info("get response from pool %s", result)
 		err = json.Unmarshal([]byte(result), &response)
 		if err != nil {
-			c.log.Error("failed to get response from pool: %s", err.Error())
+			level.Error(c.logger).Log("msg", "failed to get response from pool", "err", err.Error())
 			continue
 		}
 		// c.log.Info("get response : %v", response)
@@ -104,7 +105,7 @@ func (c *StratumClient) Send(request *StratumRequest) *StratumResponse {
 	// .log.Info("send msg to pool: %s", msg)
 	_, err = c.socket.Write([]byte(msg))
 	if err != nil {
-		c.log.Error("failed to send msg to pool: %s", err.Error())
+		level.Error(c.logger).Log("msg", "failed to send msg to pool", "err", err.Error())
 		return &StratumResponse{Error: err}
 	}
 

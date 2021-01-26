@@ -118,7 +118,7 @@ func (b *balanceCmd) Run() error {
 		return errors.Wrapf(err, "creating config")
 	}
 
-	_, err = createLogger(cfg.Logger, cfg.LogLevel)
+	logger, err := createLogger(cfg.Logger, cfg.LogLevel)
 	if err != nil {
 		return errors.Wrapf(err, "creating logger")
 	}
@@ -141,7 +141,7 @@ func (b *balanceCmd) Run() error {
 			return errors.Wrapf(err, "parsing argument")
 		}
 	}
-	return ops.Balance(ctx, client, contract.Getter, addr.addr)
+	return ops.Balance(ctx, logger, client, contract.Getter, addr.addr)
 }
 
 type depositCmd struct {
@@ -249,7 +249,7 @@ func (n newDisputeCmd) Run() error {
 		return errors.Wrapf(err, "creating config")
 	}
 
-	_, err = createLogger(cfg.Logger, cfg.LogLevel)
+	logger, err := createLogger(cfg.Logger, cfg.LogLevel)
 	if err != nil {
 		return errors.Wrapf(err, "creating logger")
 	}
@@ -275,7 +275,7 @@ func (n newDisputeCmd) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "parsing argument")
 	}
-	return ops.Dispute(ctx, client, contract, account, requestID.Int, timestamp.Int, minerIndex.Int)
+	return ops.Dispute(ctx, logger, client, contract, account, requestID.Int, timestamp.Int, minerIndex.Int)
 }
 
 type voteCmd struct {
@@ -290,7 +290,7 @@ func (v voteCmd) Run() error {
 		return errors.Wrapf(err, "creating config")
 	}
 
-	_, err = createLogger(cfg.Logger, cfg.LogLevel)
+	logger, err := createLogger(cfg.Logger, cfg.LogLevel)
 	if err != nil {
 		return errors.Wrapf(err, "creating logger")
 	}
@@ -306,7 +306,7 @@ func (v voteCmd) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "parsing argument")
 	}
-	return ops.Vote(ctx, client, contract, account, disputeID.Int, v.support)
+	return ops.Vote(ctx, logger, client, contract, account, disputeID.Int, v.support)
 }
 
 type showCmd struct {

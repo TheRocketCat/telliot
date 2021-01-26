@@ -6,7 +6,6 @@ package tracker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -49,7 +48,7 @@ func NewGasTracker(logger log.Logger, db db.DB, client rpc.ETHClient) *GasTracke
 func (b *GasTracker) Exec(ctx context.Context) error {
 	netID, err := b.client.NetworkID(ctx)
 	if err != nil {
-		fmt.Println(err)
+		level.Error(b.logger).Log("msg", "could not get network id", "err", err)
 		return err
 	}
 

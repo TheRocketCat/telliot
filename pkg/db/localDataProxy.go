@@ -4,21 +4,23 @@
 package db
 
 import (
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
 type localProxy struct {
 	localDB DB
-	log     *util.Logger
+	logger  log.Logger
 }
 
 // OpenLocalProxy creates a local data proxy so that the miner operations are seamless regardless
 // whether accessing data remotely or locally.
 func OpenLocalProxy(localDB DB) (DataServerProxy, error) {
-	log := util.NewLogger("db", "LocalDataProxy")
-	log.Info("Using local data proxy to pull data from local DB")
-	return &localProxy{localDB: localDB, log: log}, nil
+	logger := log.With(util.SetupLogger("debug"), "db", "LocalDataProxy")
+	level.Info(logger).Log("msg", "using local data proxy to pull data from local DB")
+	return &localProxy{localDB: localDB, logger: logger}, nil
 }
 
 func (l *localProxy) Get(key string) ([]byte, error) {
@@ -43,7 +45,11 @@ func (l *localProxy) BatchGet(keys []string) (map[string][]byte, error) {
 			outMap[k] = bts
 		}
 	}
-	l.log.Debug("Requested keys: %v, resulting output:%v", keys, outMap)
+	level.Debug(l.logger).Log(
+		"msg", "get result from requested keys",
+		"keys", keys,
+		"output", outMap,
+	)
 	return outMap, nil
 }
 

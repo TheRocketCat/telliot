@@ -4,7 +4,6 @@
 package rpc
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -12,9 +11,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/testutil"
+
+	"github.com/go-kit/kit/log/level"
+	"github.com/tellor-io/telliot/pkg/util"
 )
 
 func TestABICodec(t *testing.T) {
+	logger := util.SetupLogger("debug")
+
 	config.OpenTestConfig(t)
 	codec, err := BuildCodec()
 	if err != nil {
@@ -35,6 +39,6 @@ func TestABICodec(t *testing.T) {
 
 	for i := 0; i < len(data); i += 32 {
 		hex := hexutil.Encode(data[i : i+32])
-		fmt.Println(hex)
+		level.Debug(logger).Log("msg", "print hex", "hex", hex)
 	}
 }

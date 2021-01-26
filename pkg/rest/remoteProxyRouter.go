@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/db"
 	"github.com/tellor-io/telliot/pkg/util"
 )
@@ -16,12 +18,15 @@ import (
 // RemoteProxyRouter handles incoming http requests.
 type RemoteProxyRouter struct {
 	dataProxy db.DataServerProxy
-	log       *util.Logger
+	logger    log.Logger
 }
 
 // CreateRemoteProxy creates a remote proxy instance.
 func CreateRemoteProxy(ctx context.Context, proxy db.DataServerProxy) (*RemoteProxyRouter, error) {
-	return &RemoteProxyRouter{dataProxy: proxy, log: util.NewLogger("rest", "RemoteProxyRouter")}, nil
+	return &RemoteProxyRouter{
+		dataProxy: proxy,
+		logger:    log.With(util.SetupLogger("debug"), "rest", "RemoteProxyRouter"),
+	}, nil
 }
 
 // Default http handler callback which will route to appropriate handler internally.
@@ -34,29 +39,29 @@ func (r *RemoteProxyRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	w.Header().Add("Content-Type", "application/octet-stream")
 
 	if e := recover(); e != nil {
-		fmt.Printf("Problem with proxied data request: %v\n", e)
+		level.Info(r.logger).Log("msg", "problem with proxied data request", "err", e)
 		fmt.Fprintf(w, "Cannot serve request")
 		return
 	}
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		r.log.Error("Problem reading request data:%v", err)
+		level.Error(r.logger).Log("msg", "problem reading request", "err", err)
 		fmt.Fprint(w, "Could not read request data")
 		return
 	}
-	r.log.Info("Getting request with %d bytes of data", len(data))
+	level.Info(r.logger).Log("msg", "getting request", "bytes", len(data))
 	outData, err := r.dataProxy.IncomingRequest(data)
 
 	if err != nil {
-		r.log.Error("Problem handling incoming request data:%v", err)
+		level.Error(r.logger).Log("msg", "problem with handling incoming request", "err", err)
 		fmt.Fprint(w, "Could not handle request")
 		return
 	}
-	r.log.Info("Produced result with %d bytes of data", len(outData))
+	level.Info(r.logger).Log("msg", "produced result", "bytes", len(outData))
 	w.WriteHeader(200)
 	_, err = w.Write(outData)
 	if err != nil {
-		r.log.Error("couldn't write the response:%v", err)
+		level.Error(r.logger).Log("msg", "couldn't write response", "err", err)
 		fmt.Fprint(w, "couldn't write the response")
 		return
 	}

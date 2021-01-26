@@ -5,12 +5,12 @@ package tracker
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/contracts"
 	"github.com/tellor-io/telliot/pkg/db"
@@ -62,7 +62,7 @@ func TestRunner(t *testing.T) {
 	if err := runner.Start(context.Background(), exitCh); err != nil {
 		testutil.Ok(t, err)
 	}
-	fmt.Println("runner done")
+	level.Info(logger).Log("msg", "runner done")
 	time.Sleep(2 * time.Second)
 	close(exitCh)
 	time.Sleep(1 * time.Second)

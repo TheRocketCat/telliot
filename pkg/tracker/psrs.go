@@ -4,13 +4,14 @@
 package tracker
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"time"
 
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/apiOracle"
 	"github.com/tellor-io/telliot/pkg/config"
+	"github.com/tellor-io/telliot/pkg/util"
 )
 
 const RequestID_TRB_ETH int = 43
@@ -133,9 +134,7 @@ func TimeWeightedAvg(interval time.Duration, weightFn func(float64) (float64, fl
 		result.Volume = maxVolume
 		// if math.Min(weightSum/targetWeight, 1.0) < .5{
 		// 	values,_ := apiOracle.GetNearestTwoRequestValue(apis[0].Identifier, at)
-		// 	fmt.Println("not enough data for time series, series starts : ", values.Created)
 		// }
-		//fmt.Println("Time Weighted: ", result)
 		return result, math.Min(weightSum/targetWeight, 1.0)
 	}
 }
@@ -178,14 +177,16 @@ func MedianAt(apis []*IndexTracker, at time.Time) (apiOracle.PriceInfo, float64)
 }
 
 func ManualEntry(apis []*IndexTracker, at time.Time) (apiOracle.PriceInfo, float64) {
+	logger := util.SetupLogger("debug")
+
 	vals, confidence := getLatest(apis, at)
 	if confidence == 0 {
 		return apiOracle.PriceInfo{}, 0
 	}
 	for _, val := range vals {
 		if int64(val.Volume) < clck.Now().Unix() {
-			fmt.Println("Pulled Timestamp: ", val.Volume)
-			fmt.Println("Warning: Manual Data Entry is expired, please update")
+			level.Debug(logger).Log("msg", "pulled timestamp", "volume", val.Volume)
+			level.Warn(logger).Log("msg", "manual data entry is expired, please update")
 			return apiOracle.PriceInfo{}, 0
 		}
 	}

@@ -15,13 +15,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
 type StratumPool struct {
-	log           *util.Logger
+	logger        log.Logger
 	url           string
 	minerAddress  string
 	minerPassword string
@@ -76,14 +78,14 @@ func CreatePool(cfg *config.Config, group *MiningGroup) *StratumPool {
 		url:           cfg.PoolURL,
 		minerAddress:  cfg.PublicAddress + "." + cfg.Worker,
 		minerPassword: cfg.Password,
-		log:           util.NewLogger("pow", "StratumPool"),
+		logger:        log.With(util.SetupLogger("debug"), "pow", "StratumPool"),
 		group:         group,
 	}
 }
 
 func (p *StratumPool) GetWork(input chan *Work) (*Work, bool) {
 	if p.stratumClient != nil && p.stratumClient.running {
-		p.log.Warn("stratum client already running")
+		level.Warn(p.logger).Log("msg", "stratum client already running")
 		return nil, false
 	}
 
@@ -92,7 +94,7 @@ func (p *StratumPool) GetWork(input chan *Work) (*Work, bool) {
 	msgChan := make(chan *StratumResponse)
 	stratumClient, err := StratumConnect(p.url, msgChan)
 	if err != nil {
-		p.log.Error("stratum connect error: %s", err.Error())
+		level.Error(p.logger).Log("msg", "stratum connect error", "err", err.Error())
 		return nil, false
 	}
 
@@ -109,7 +111,7 @@ func (p *StratumPool) GetWork(input chan *Work) (*Work, bool) {
 			if !subscribed {
 				r, err := json.Marshal(msg.Result)
 				if err != nil {
-					p.log.Error("parse subscribe result error: %s", err.Error())
+					level.Error(p.logger).Log("msg", "parse subscribe result error", "err", err.Error())
 					return
 				}
 				result := string(r)
@@ -124,16 +126,16 @@ func (p *StratumPool) GetWork(input chan *Work) (*Work, bool) {
 			if msg.Method == "mining.notify" {
 				params, err := json.Marshal(msg.Params)
 				if err != nil {
-					p.log.Error("mining.notify msg parse error: %s", err.Error())
+					level.Error(p.logger).Log("msg", "mining.notify msg parse error", "err", err.Error())
 					return
 				}
 
 				var miningNotify MiningNotify
 				if err := json.Unmarshal([]byte(string(params)), &miningNotify); err != nil {
-					p.log.Error("mining.notify params msg parse error: %s", err.Error())
+					level.Error(p.logger).Log("msg", "mining.notify params msg parse error", "err", err.Error())
 				}
 
-				p.log.Info("mining.notify: %#v", miningNotify)
+				level.Info(p.logger).Log("msg", "check mining notification", "miningNotify", miningNotify)
 
 				newChallenge := &MiningChallenge{
 					Challenge:  decodeHex(miningNotify.Challenge),
@@ -155,7 +157,7 @@ func (p *StratumPool) GetWork(input chan *Work) (*Work, bool) {
 
 			} else if msg.Method == "mining.set_difficulty" {
 				// Not implmented
-				p.log.Error("mining.set_difficulty not implemented")
+				level.Error(p.logger).Log("msg", "mining.set_difficulty not implemented")
 			}
 		}
 	}()

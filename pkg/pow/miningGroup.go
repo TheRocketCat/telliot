@@ -5,12 +5,13 @@ package pow
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/big"
 	"os"
 	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/config"
 )
 
@@ -67,6 +68,7 @@ type MiningGroup struct {
 	Backends    []*Backend
 	LastPrinted time.Time
 	exitCh      chan os.Signal
+	logger      log.Logger
 }
 
 func NewMiningGroup(hashers []Hasher, exitCh chan os.Signal) *MiningGroup {
@@ -149,10 +151,15 @@ func (g *MiningGroup) PrintHashRateSummary() {
 	now := time.Now()
 	delta := now.Sub(g.LastPrinted).Seconds()
 	totalHashrate := float64(totalHashes) / delta
-	fmt.Printf("Total hashrate %s\n", formatHashRate(totalHashrate))
+	level.Info(g.logger).Log("msg", "get total hashrate", "totalHashrate", formatHashRate(totalHashrate))
 	for _, b := range g.Backends {
 		hashRate := float64(b.HashSincePrint) / delta
-		fmt.Printf("\t%8s (%4.1f%%): %s \n", formatHashRate(hashRate), (hashRate/totalHashrate)*100, b.Name())
+		level.Debug(g.logger).Log(
+			"msg", "print hash values",
+			"hashRate", fmt.Sprintf("%8s", formatHashRate(hashRate)),
+			"avgHashRate", fmt.Sprintf("%4.1f%%", (hashRate/totalHashrate)*100),
+			"name", b.Name(),
+		)
 		b.HashSincePrint = 0
 	}
 	g.LastPrinted = now
@@ -233,7 +240,7 @@ func (g *MiningGroup) Mine(input chan *Work, output chan *Result) {
 		// Read in a result from one of the miners.
 		case result := <-resultChannel:
 			if result.err != nil {
-				log.Printf("hasher failed: %s", result.err.Error())
+				level.Error(g.logger).Log("msg", "hasher failed", "err", result.err.Error())
 				g.exitCh <- os.Interrupt
 			}
 			idleWorkers <- result.backend

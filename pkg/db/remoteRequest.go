@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/util"
 )
@@ -47,31 +48,30 @@ type requestPayload struct {
 	sig []byte
 }
 
-var rrlog *util.Logger = util.NewLogger("db", "RemoteRequest")
+var rrLog log.Logger = log.With(util.SetupLogger("debug"), "db", "RemoteRequest")
 
 // Create an outgoing request for the given keys.
 func createRequest(dbKeys []string, values [][]byte, signer RequestSigner) (*requestPayload, error) {
 
-	//rrlog = util.NewLogger("db", "RemoteRequest")
 	t := time.Now().Unix()
 	buf := new(bytes.Buffer)
-	rrlog.Debug("encoding initial keys and timestamp")
+	level.Debug(rrLog).Log("msg", "encoding initial keys and timestamp")
 	err := encodeKeysValuesAndTime(buf, dbKeys, values, t)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debug("Generating request hash...")
+	level.Debug(rrLog).Log("msg", "generating request hash")
 	hash := crypto.Keccak256(buf.Bytes())
-	log.Debug("Signing hash")
+	level.Debug(rrLog).Log("msg", "signing hash")
 	sig, err := signer.Sign(hash)
 
 	if err != nil {
-		log.Error("signature failed", err.Error())
+		level.Error(rrLog).Log("msg", "signature failed", "err", err.Error())
 		return nil, err
 	}
 	if sig == nil {
-		log.Error("signature was not generated")
+		level.Error(rrLog).Log("msg", "signature was not generated")
 		return nil, errors.Errorf("Could not generate a signature for  hash: %v", hash)
 	}
 	return &requestPayload{dbKeys: dbKeys, dbValues: values, timestamp: t, sig: sig}, nil
@@ -81,43 +81,49 @@ func createRequest(dbKeys []string, values [][]byte, signer RequestSigner) (*req
 // encoding just those parts.
 func encodeKeysValuesAndTime(buf *bytes.Buffer, dbKeys []string, values [][]byte, timestamp int64) error {
 
-	rrlog.Debug("Encoding timestamp")
+	level.Debug(rrLog).Log("msg", "encoding timestamp")
 	if err := encode(buf, timestamp); err != nil {
 		return err
 	}
 	if dbKeys == nil {
-		rrlog.Error("no keys to encode")
+		level.Error(rrLog).Log("msg", "no keys to encode")
 		return errors.Errorf("No keys to encode")
 	}
 
-	rrlog.Debug("Encoding dbKeys")
+	level.Debug(rrLog).Log("msg", "encoding dbKeys")
 	if err := encode(buf, uint32(len(dbKeys))); err != nil {
-		rrlog.Error("problem encoding dbKeys", err.Error())
+		level.Error(rrLog).Log("msg", "problem encoding dbKeys", "err", err.Error())
 		return err
 	}
 	for _, k := range dbKeys {
-		rrlog.Debug("Encoding key", k)
+		level.Debug(rrLog).Log("msg", "encoding key", k)
 		if err := encodeString(buf, k); err != nil {
-			rrlog.Error("problem encoding key", err.Error())
+			level.Error(rrLog).Log("msg", "problem encoding key", "err", err.Error())
 			return err
 		}
 	}
 
 	if values != nil {
 		if err := encode(buf, uint32(len(values))); err != nil {
-			rrlog.Error("problem encoding values length", err.Error())
+			level.Error(rrLog).Log(
+				"msg", "problem encoding values length",
+				"err", err.Error(),
+			)
 			return err
 		}
 		for _, v := range values {
 			if err := encodeBytes(buf, v); err != nil {
-				rrlog.Error("problem encoding value bytes", err.Error())
+				level.Error(rrLog).Log(
+					"msg", "problem encoding value bytes",
+					"err", err.Error(),
+				)
 				return err
 			}
 		}
 
 	} else {
 		if err := encode(buf, uint32(0)); err != nil {
-			rrlog.Error("could not encode zero value", err.Error())
+			level.Error(rrLog).Log("msg", "could not encode zero value", "err", err.Error())
 			return err
 		}
 	}
@@ -170,16 +176,16 @@ func encodeRequest(r *requestPayload) ([]byte, error) {
 	}
 
 	//capture keys and timestamp
-	rrlog.Debug("Encoding keys and time...")
+	level.Debug(rrLog).Log("msg", "encoding keys and time")
 	if err := encodeKeysValuesAndTime(buf, r.dbKeys, r.dbValues, r.timestamp); err != nil {
-		rrlog.Error("Problem encoding keys and time", err)
+		level.Error(rrLog).Log("msg", "problem encoding keys and time", "err", err)
 		return nil, err
 	}
 
 	//then if there is a sig, encode it
-	rrlog.Debug("Encoding signature...")
+	level.Debug(rrLog).Log("msg", "encoding signature")
 	if err := encodeBytes(buf, r.sig); err != nil {
-		rrlog.Error("Problem encoding signature", err)
+		level.Error(rrLog).Log("msg", "problem with encoding signature", "err", err)
 		return nil, err
 	}
 

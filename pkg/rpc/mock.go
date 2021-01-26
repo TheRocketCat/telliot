@@ -21,6 +21,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 )
 
 const (
@@ -33,7 +36,7 @@ const (
 	getUintVarFN    = "0x612c8f7f"
 )
 
-var mockClientLog = util.NewLogger("rpc", "mockClient")
+var mockClientLogger = log.With(util.SetupLogger("debug"), "rpc", "mockClient")
 
 // CurrentChallenge holds details about the current mining challenge.
 type CurrentChallenge struct {
@@ -97,7 +100,8 @@ func NewMockClientWithValues(opts *MockOptions) ETHClient {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Mining Status", opts.MiningStatus)
+	level.Info(mockClientLogger).Log("msg", "check mining status", "status", opts.MiningStatus)
+
 	return &mockClient{balance: opts.ETHBalance, miningStatus: opts.MiningStatus, nonce: opts.Nonce,
 		gasPrice: opts.GasPrice, tokenBalance: opts.TokenBalance,
 		top50Requests: opts.Top50Requests, currentChallenge: opts.CurrentChallenge,
@@ -109,7 +113,7 @@ func (c *mockClient) SetTokenBalance(bal *big.Int) {
 }
 
 func (c *mockClient) Close() {
-	mockClientLog.Info("Closing mock client")
+	level.Info(mockClientLogger).Log("msg", "closing mock client")
 }
 
 func (c *mockClient) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
@@ -127,7 +131,7 @@ func (c *mockClient) CallContract(ctx context.Context, call ethereum.CallMsg, bl
 	fn := hexutil.Encode(call.Data[0:4])
 	meth := c.abiCodec.methods[fn]
 	if meth == nil {
-		mockClientLog.Error("Unknown function with sig: %s\n", fn)
+		level.Error(mockClientLogger).Log("msg", "unknown function signature", "sig", fn)
 		return []byte{}, nil
 	}
 
@@ -135,19 +139,19 @@ func (c *mockClient) CallContract(ctx context.Context, call ethereum.CallMsg, bl
 	case balanceAtFN:
 		{
 			return meth.Outputs.Pack(c.tokenBalance)
-			//mockClientLog.Debug("Getting balance from contract")
+			//level.Debug(mockClientLogger).Log("msg", "getting balance from contract")
 			//return math.PaddedBigBytes(math.U256(c.tokenBalance), 32), nil
 		}
 	case didMineFN:
 		{
-			fmt.Println("getting Mining Status", c.miningStatus)
+			level.Info(mockClientLogger).Log("msg", "getting mining status", "status", c.miningStatus)
 			return meth.Outputs.Pack(c.miningStatus)
 		}
 	case top50FN:
 		{
 			return meth.Outputs.Pack(c.top50Requests)
 			/*
-				mockClientLog.Debug("Getting top-50")
+				level.Debug(mockClientLogger).Log("msg","getting top-50")
 				b := new(bytes.Buffer)
 				for _, t := range c.top50Requests {
 					hex := math.PaddedBigBytes(math.U256(t), 32)
@@ -165,7 +169,7 @@ func (c *mockClient) CallContract(ctx context.Context, call ethereum.CallMsg, bl
 				c.currentChallenge.Granularity,
 				c.currentChallenge.Tip)
 			/*
-				mockClientLog.Debug("Getting current variables")
+				level.Debug(mockClientLogger).Log("msg", "getting current variables")
 				//bytes32, uint, uint,string memory,uint,uint
 				//current challenge hash, curretnRequestId, level of difficulty, api/query string, and granularity(number of decimals requested
 				b := new(bytes.Buffer)
@@ -230,24 +234,30 @@ func (c *mockClient) CallContract(ctx context.Context, call ethereum.CallMsg, bl
 			reqID := vals[0].(*big.Int)
 			params := c.mockQueryMeta[uint(reqID.Uint64())]
 			if params == nil {
-				mockClientLog.Warn("No params found with id: %v\n", reqID)
+				level.Warn(mockClientLogger).Log("msg", "no params found", "reqId", reqID)
 				return []byte{}, nil
 			}
-			mockClientLog.Debug("Using mock params: %+v\n", params)
+			level.Debug(mockClientLogger).Log(
+				"msg", "using mock",
+				"params", fmt.Sprintf("%+v", params),
+			)
 			return meth.Outputs.Pack(params.QueryString, "", [32]byte{}, big.NewInt(int64(params.Granularity)), big.NewInt(1), big.NewInt(0))
 
 			/*
-				mockClientLog.Debug("Getting request vars")
+				level.Debug(mockClientLogger).Log("msg","getting request vars")
 
 				hex := hexutil.Encode(reqIDData)
-				mockClientLog.Debug("Encoded call params data: %s\n", hex)
+				level.Debug(mockClientLog).Log("msg", "encoded call params", "data", hex)
 				reqIDNum, err := hexutil.DecodeBig(hex)
 				if err != nil {
 					return nil, err
 				}
 
 				reqID := reqIDNum.Uint64()
-				mockClientLog.Debug("Mocking response for request id: %d\n", reqID)
+				level.Debug(mockClientLogger).Log(
+					"msg", "mocking response for request",
+					"reqID", reqID,
+				)
 				b := new(bytes.Buffer)
 				mockParams := c.mockQueryMeta[uint(reqID)]
 				if mockParams == nil {
@@ -303,7 +313,10 @@ func (c *mockClient) CallContract(ctx context.Context, call ethereum.CallMsg, bl
 				if err := paddedInt(b, big.NewInt(0)); err != nil {
 					return nil, err
 				}
-				mockClientLog.Debug("Encoded request vars: %v\n", b.Bytes())
+				level.Debug(mockClientLogger).Log(
+					"msg","encoded request",
+					"vars", fmt.Sprint("%v\n", b.Bytes()),
+				)
 				return b.Bytes(), nil
 			*/
 		}
@@ -313,7 +326,7 @@ func (c *mockClient) CallContract(ctx context.Context, call ethereum.CallMsg, bl
 		}
 	}
 
-	mockClientLog.Warn("Call unhandled Fn: %s\n", fn)
+	level.Warn(mockClientLogger).Log("msg", "call unhandled", "fn", fn)
 	return []byte{}, nil
 }
 

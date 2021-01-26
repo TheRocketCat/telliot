@@ -4,17 +4,18 @@
 package pow
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/config"
 )
 
-func SetupMiningGroup(cfg *config.Config, exitCh chan os.Signal) (*MiningGroup, error) {
+func SetupMiningGroup(cfg *config.Config, logger log.Logger, exitCh chan os.Signal) (*MiningGroup, error) {
 	var hashers []Hasher
 	gpus, err := GetOpenCLGPUs()
-	fmt.Printf("Found %d GPUs:\n", len(gpus))
+	level.Info(logger).Log("msg", "found gpus", "amount", len(gpus))
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +25,7 @@ func SetupMiningGroup(cfg *config.Config, exitCh chan os.Signal) (*MiningGroup, 
 			gpuConfig = cfg.GPUConfig["default"]
 		}
 		if gpuConfig != nil && gpuConfig.Disabled {
-			fmt.Printf("%s disabled in config, ignoring\n", gpu.Name())
+			level.Info(logger).Log("msg", "gpu disabled in config ignored", "name", gpu.Name())
 			continue
 		}
 		thisMiner, err := NewGpuMiner(gpu, gpuConfig, cfg.EnablePoolWorker)
@@ -32,10 +33,19 @@ func SetupMiningGroup(cfg *config.Config, exitCh chan os.Signal) (*MiningGroup, 
 			return nil, errors.Wrapf(err, "initializing GPU %s", gpu.Name())
 		}
 		hashers = append(hashers, thisMiner)
-		fmt.Printf("%-20s groupSize:%d groups:%d count:%d\n", thisMiner.Name(), thisMiner.GroupSize, thisMiner.Groups, thisMiner.Count)
+		level.Info(logger).Log(
+			"msg", "check miner information",
+			"name", thisMiner.Name(),
+			"groupSize", thisMiner.GroupSize,
+			"groups", thisMiner.Groups,
+			"count", thisMiner.Count,
+		)
 	}
 	if len(hashers) == 0 {
-		fmt.Printf("No GPUs enabled, falling back to CPU mining, using %d threads\n", cfg.NumProcessors)
+		level.Info(logger).Log(
+			"msg", "no GPUs enabled, falling back to CPU mining",
+			"numProcessors", cfg.NumProcessors,
+		)
 		for i := 0; i < cfg.NumProcessors; i++ {
 			hashers = append(hashers, NewCpuMiner(int64(i)))
 		}

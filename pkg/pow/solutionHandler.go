@@ -15,6 +15,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
 	tellorCommon "github.com/tellor-io/telliot/pkg/common"
 	"github.com/tellor-io/telliot/pkg/config"
@@ -30,7 +32,7 @@ import (
  */
 
 type SolutionHandler struct {
-	log              *util.Logger
+	logger           log.Logger
 	proxy            db.DataServerProxy
 	currentChallenge *MiningChallenge
 	currentNonce     string
@@ -43,7 +45,7 @@ func CreateSolutionHandler(cfg *config.Config, submitter tellorCommon.Transactio
 	return &SolutionHandler{
 		proxy:     proxy,
 		submitter: submitter,
-		log:       util.NewLogger("pow", "SolutionHandler"),
+		logger:    log.With(util.SetupLogger("debug"), "pow", "SolutionHandler"),
 	}
 }
 
@@ -82,9 +84,9 @@ func (s *SolutionHandler) Submit(ctx context.Context, result *Result) (*types.Tr
 			value, err = hexutil.DecodeBig(string(val))
 			if err != nil {
 				if challenge.RequestIDs[i].Uint64() > tracker.MaxPSRID() {
-					s.log.Error("problem decoding price value prior to submitting solution: %v\n", err)
+					level.Error(s.logger).Log("msg", "problem decoding price value prior to submitting solution", "err", err)
 					if len(val) == 0 {
-						s.log.Error("0 value being submitted")
+						level.Error(s.logger).Log("msg", "0 value being submitted")
 						s.currentValues[i] = big.NewInt(0)
 					}
 					continue

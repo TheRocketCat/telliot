@@ -17,6 +17,9 @@ import (
 	"github.com/tellor-io/telliot/pkg/testutil"
 
 	"github.com/ethereum/go-ethereum/common/math"
+
+	"github.com/go-kit/kit/log/level"
+	"github.com/tellor-io/telliot/pkg/util"
 )
 
 func createChallenge(id int, difficulty int64) *MiningChallenge {
@@ -116,13 +119,15 @@ func TestMulti(t *testing.T) {
 	}
 	cfg := config.OpenTestConfig(t)
 
+	logger := util.SetupLogger("debug")
+
 	var hashers []Hasher
 	for i := 0; i < 4; i++ {
 		hashers = append(hashers, NewCpuMiner(int64(i)))
 	}
 	gpus, err := GetOpenCLGPUs()
 	if err != nil {
-		fmt.Println(gpus)
+		level.Info(logger).Log("msg", "show gpus", "gpus", gpus)
 		testutil.Ok(t, err)
 	}
 	for _, gpu := range gpus {
@@ -130,7 +135,7 @@ func TestMulti(t *testing.T) {
 		testutil.Ok(t, err)
 		hashers = append(hashers, impl)
 	}
-	fmt.Printf("Using %d hashers\n", len(hashers))
+	level.Info(logger).Log("msg", "hashers used", "amount", len(hashers))
 	exitCh := make(chan os.Signal)
 	group := NewMiningGroup(hashers, exitCh)
 	input := make(chan *Work)

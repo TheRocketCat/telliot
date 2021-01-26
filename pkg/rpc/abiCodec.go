@@ -9,12 +9,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/contracts/master"
 	"github.com/tellor-io/telliot/pkg/contracts/proxy"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var abiCodecLog = util.NewLogger("rpc", "ABICodec")
+var abiCodecLog = log.With(util.SetupLogger("debug"), "rpc", "ABICodec")
 
 // ABICodec holds abi definitions for encoding/decoding contract methods and events.
 type ABICodec struct {
@@ -56,12 +58,13 @@ func BuildCodec() (*ABICodec, error) {
 	eventMap := make(map[string]*abi.Event)
 	for _, a := range abiStruct.Methods {
 		sig := hexutil.Encode(a.ID)
-		abiCodecLog.Debug("Mapping method sig: %s to method: %s", sig, a.Name)
+		level.Debug(abiCodecLog).Log("msg", "mapping method sig", "sig", sig, "method", a.Name)
 		methodMap[sig] = &abi.Method{Name: a.Name, Constant: a.Constant, Inputs: a.Inputs, Outputs: a.Outputs}
 	}
 	for _, e := range abiStruct.Events {
 		sig := hexutil.Encode(e.ID.Bytes())
-		abiCodecLog.Debug("Mapping event sig: %s to event %s", sig, e.Name)
+		//abiCodecLog.Debug("Mapping event sig: %s to event %s", sig, e.Name)
+		level.Debug(abiCodecLog).Log("msg", "mapping method sig", "sig", sig, "method", e.Name)
 		eventMap[sig] = &abi.Event{Name: e.Name, Anonymous: e.Anonymous, Inputs: e.Inputs}
 	}
 

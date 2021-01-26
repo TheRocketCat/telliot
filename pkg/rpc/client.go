@@ -5,7 +5,6 @@ package rpc
 
 import (
 	"context"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -16,6 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/util"
 )
@@ -60,7 +61,7 @@ type ETHClient interface {
 type clientInstance struct {
 	ethClient *ethclient.Client
 	timeout   time.Duration
-	log       *util.Logger
+	logger    log.Logger
 }
 
 var (
@@ -79,7 +80,7 @@ func NewClient(url string) (ETHClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &clientInstance{ethClient: client, timeout: timeout, log: util.NewLogger("rpc", "client")}, nil
+	return &clientInstance{ethClient: client, timeout: timeout, logger: log.With(util.SetupLogger("debug"), "rpc", "client")}, nil
 }
 
 func (c *clientInstance) withTimeout(ctx context.Context, fn func(*context.Context) error) error {
@@ -98,12 +99,12 @@ func (c *clientInstance) withTimeout(ctx context.Context, fn func(*context.Conte
 		if strings.Contains(err.Error(), "replacement transaction underpriced") {
 			return err
 		}
-		c.log.Debug("Problem in calling eth client:%v", err)
+		level.Debug(c.logger).Log("msg", "problem in calling eth client", "err", err)
 		//pause for a bit and try again
 		sleepTime := backoff[tryCount%len(backoff)]
 		tryCount++
 		if time.Now().After(nextTick) {
-			c.log.Error("calling ethClient: %v\n", err)
+			level.Error(c.logger).Log("msg", "calling eth client", "err", err)
 			nextTick = time.Now().Add(errorPrintTick)
 		}
 
@@ -118,13 +119,13 @@ func (c *clientInstance) withTimeout(ctx context.Context, fn func(*context.Conte
 }
 
 func (c *clientInstance) Close() {
-	c.log.Info("Closing ETHClient")
+	level.Info(c.logger).Log("msg", "closing ETHClient")
 	c.ethClient.Close()
 }
 
 func (c *clientInstance) SendTransaction(ctx context.Context, tx *types.Transaction) error {
 	_err := c.withTimeout(ctx, func(_ctx *context.Context) error {
-		c.log.Info("sending txn on-chain - details:%+v", tx)
+		level.Info(c.logger).Log("msg", "sending txn on-chain", "details", tx)
 		return c.ethClient.SendTransaction(*_ctx, tx)
 	})
 	return _err
@@ -171,14 +172,17 @@ func (c *clientInstance) SubscribeFilterLogs(ctx context.Context, query ethereum
 
 func (c *clientInstance) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
 	var res []byte
-	c.log.Debug("Getting code at address", contract)
+	level.Debug(c.logger).Log("msg", "getting code at address", "contract", contract)
 	_err := c.withTimeout(ctx, func(_ctx *context.Context) error {
 		r, e := c.ethClient.CodeAt(*_ctx, contract, blockNumber)
 		if e != nil {
-			c.log.Error("Problem getting code from eth client:%v", e)
+			level.Error(c.logger).Log("msg", "problem getting code at address", "err", e)
 		}
-		log.Printf("_normalLog Found %d bytes of code at address:%v", len(r), contract)
-		c.log.Debug("Found %d bytes of code at address:%v", len(r), contract)
+		level.Debug(c.logger).Log(
+			"msg", "found bytes of code at address",
+			"bytes", len(r),
+			"address", contract,
+		)
 		res = r
 		return e
 	})
@@ -192,16 +196,21 @@ func (c *clientInstance) TransactionReceipt(ctx context.Context, txHash common.H
 func (c *clientInstance) CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
 	var res []byte
 	fn := hexutil.Encode(call.Data[0:4])
-	c.log.Debug("Calling contract fn: %v\n", fn)
+	level.Debug(c.logger).Log("msg", "calling contract", "fn", fn)
 	_err := c.withTimeout(ctx, func(_ctx *context.Context) error {
 		r, e := c.ethClient.CallContract(*_ctx, call, blockNumber)
 		if e != nil {
-			c.log.Error("Problem calling %s:%v", fn, e)
+			level.Error(c.logger).Log("msg", "problem calling", "fn", fn, "err", e)
 		}
 		for i := 0; i < len(r); i += 32 {
-			c.log.Debug("Slice %d: %s\n", i, hexutil.Encode(r[i:i+32]))
+			level.Debug(c.logger).Log("msg", "get slice", "index", i, "slice", hexutil.Encode(r[i:i+32]))
 		}
-		c.log.Debug("Called fn: %s with result %v (len: %d)", fn, r, len(r))
+		level.Debug(c.logger).Log(
+			"msg", "called fn",
+			"fn", fn,
+			"result", r,
+			"len", len(r),
+		)
 		res = r
 		return e
 	})
@@ -253,10 +262,10 @@ func (c *clientInstance) EstimateGas(ctx context.Context, call ethereum.CallMsg)
 
 func (c *clientInstance) BalanceAt(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error) {
 	var res *big.Int
-	c.log.Debug("Getting balance of address")
+	level.Debug(c.logger).Log("msg", "getting balance of address")
 	_err := c.withTimeout(ctx, func(_ctx *context.Context) error {
 		r, e := c.ethClient.BalanceAt(*_ctx, address, block)
-		c.log.Debug("Getting balance for address %v: $v\n", address, r)
+		level.Debug(c.logger).Log("msg", "getting balance for", "address", address, "r", r)
 		res = r
 		return e
 	})

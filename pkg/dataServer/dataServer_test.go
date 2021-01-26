@@ -5,7 +5,6 @@ package dataServer
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/contracts"
 	"github.com/tellor-io/telliot/pkg/db"
@@ -59,7 +59,7 @@ func TestDataServer(t *testing.T) {
 	resp, err := http.Get("http://" + cfg.DataServer.ListenHost + ":" + strconv.Itoa(int(cfg.DataServer.ListenPort)) + "/balance")
 	testutil.Ok(t, err)
 	defer resp.Body.Close()
-	fmt.Printf("Finished: %+v", resp)
+	level.Info(logger).Log("response finished", "resp", resp)
 	exitCh <- 1
 	time.Sleep(1 * time.Second)
 	testutil.Assert(t, ds.Stopped, "Did not stop server")
