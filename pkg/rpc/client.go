@@ -17,9 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/contracts"
-	"github.com/tellor-io/telliot/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
