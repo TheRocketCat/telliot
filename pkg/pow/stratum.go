@@ -47,7 +47,7 @@ func StratumConnect(host string, msgChan chan *StratumResponse) (*StratumClient,
 	}
 	client.seq = 0
 	client.msgChan = msgChan
-	client.logger = log.With(util.SetupLogger("debug"), "pow", "Pool")
+	client.logger = log.With(util.NewLogger(), "pow", "Pool")
 	client.SetTimeout(10)
 	level.Info(client.logger).Log("msg", "connect to pool success")
 	client.running = true

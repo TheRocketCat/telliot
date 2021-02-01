@@ -3,6 +3,7 @@
 
 package util
 
+/*
 type LogConfig struct {
 	levels map[string]LogLevel
 }
@@ -43,3 +44,4 @@ func (cfg *LogConfig) GetLevel(pkg string, component string) LogLevel {
 	}
 	return lvl
 }
+*/

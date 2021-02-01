@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/db"
 	"github.com/tellor-io/telliot/pkg/util"
 )
@@ -23,9 +24,13 @@ type RemoteProxyRouter struct {
 
 // CreateRemoteProxy creates a remote proxy instance.
 func CreateRemoteProxy(ctx context.Context, proxy db.DataServerProxy) (*RemoteProxyRouter, error) {
+	filterLogger, err := util.ApplyFilter(*config.GetConfig(), "restRemoteProxyRouter", util.NewLogger())
+	if err != nil {
+		return nil, err
+	}
 	return &RemoteProxyRouter{
 		dataProxy: proxy,
-		logger:    log.With(util.SetupLogger("debug"), "rest", "RemoteProxyRouter"),
+		logger:    log.With(filterLogger, "rest", "RemoteProxyRouter"),
 	}, nil
 }
 

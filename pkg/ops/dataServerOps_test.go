@@ -19,7 +19,7 @@ import (
 func TestDataServerOps(t *testing.T) {
 	cfg := config.OpenTestConfig(t)
 	exitCh := make(chan os.Signal)
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	DB, cleanup := db.OpenTestDB(t)
 	defer t.Cleanup(cleanup)
 	client := rpc.NewMockClient()

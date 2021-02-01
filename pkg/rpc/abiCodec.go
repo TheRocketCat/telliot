@@ -19,7 +19,7 @@ import (
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var abiCodecLog = log.With(util.SetupLogger("debug"), "rpc", "ABICodec")
+var abiCodecLog = log.With(util.NewLogger(), "rpc", "ABICodec")
 
 // ABICodec holds abi definitions for encoding/decoding contract methods and events.
 type ABICodec struct {

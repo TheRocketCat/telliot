@@ -106,7 +106,7 @@ func TestMulti(t *testing.T) {
 	}
 	cfg := config.OpenTestConfig(t)
 
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 
 	var hashers []Hasher
 	for i := 0; i < 4; i++ {

@@ -29,6 +29,7 @@ import (
 	"github.com/tellor-io/telliot/pkg/pow"
 	"github.com/tellor-io/telliot/pkg/rpc"
 	"github.com/tellor-io/telliot/pkg/tracker"
+	"github.com/tellor-io/telliot/pkg/util"
 )
 
 type WorkSource interface {
@@ -77,7 +78,12 @@ func CreateMiningManager(
 	account *rpc.Account,
 ) (*MiningMgr, error) {
 
-	group, err := pow.SetupMiningGroup(cfg, logger, exitCh)
+	powFilterLogger, err := util.ApplyFilter(*cfg, "pow", logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "applying filter to logger")
+	}
+
+	group, err := pow.SetupMiningGroup(cfg, powFilterLogger, exitCh)
 	if err != nil {
 		return nil, errors.Wrap(err, "setup miners")
 	}
@@ -91,10 +97,15 @@ func CreateMiningManager(
 		return nil, errors.Wrap(err, "getting addresses")
 	}
 
-	submitter := NewSubmitter(logger, cfg, client, contract, account)
+	opsFilterLogger, err := util.ApplyFilter(*cfg, "ops", logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "applying filter to logger")
+	}
+
+	submitter := NewSubmitter(opsFilterLogger, cfg, client, contract, account)
 	mng := &MiningMgr{
 		exitCh:          exitCh,
-		logger:          logger,
+		logger:          log.With(opsFilterLogger, "component", "CreateMiningManager"),
 		Running:         false,
 		group:           group,
 		tasker:          nil,
@@ -145,12 +156,12 @@ func CreateMiningManager(
 	}
 
 	if cfg.EnablePoolWorker {
-		pool := pow.CreatePool(cfg, group)
+		pool := pow.CreatePool(powFilterLogger, cfg, group)
 		mng.tasker = pool
 		mng.solHandler = pool
 	} else {
-		mng.tasker = pow.CreateTasker(cfg, database)
-		mng.solHandler = pow.CreateSolutionHandler(cfg, submitter, database)
+		mng.tasker = pow.CreateTasker(powFilterLogger, cfg, database)
+		mng.solHandler = pow.CreateSolutionHandler(powFilterLogger, cfg, submitter, database)
 	}
 	return mng, nil
 }

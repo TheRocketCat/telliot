@@ -177,7 +177,7 @@ func MedianAt(apis []*IndexTracker, at time.Time) (apiOracle.PriceInfo, float64)
 }
 
 func ManualEntry(apis []*IndexTracker, at time.Time) (apiOracle.PriceInfo, float64) {
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 
 	vals, confidence := getLatest(apis, at)
 	if confidence == 0 {

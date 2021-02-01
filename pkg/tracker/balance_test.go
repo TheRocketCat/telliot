@@ -26,7 +26,7 @@ func TestStringId(t *testing.T) {
 	cfg := config.OpenTestConfig(t)
 	proxy, err := db.OpenLocal(cfg, DB)
 	testutil.Ok(t, err)
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	tracker := NewBalanceTracker(logger, proxy, client, nil)
 	res := tracker.String()
 
@@ -55,7 +55,7 @@ func TestNegativeBalance(t *testing.T) {
 	proxy, err := db.OpenLocal(cfg, DB)
 	testutil.Ok(t, err)
 
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	account, err := rpc.NewAccount(cfg)
 	testutil.Ok(t, err)
 	tracker := NewBalanceTracker(logger, proxy, client, &account)
@@ -73,7 +73,7 @@ func dbBalanceTest(startBal *big.Int, t *testing.T) {
 	defer t.Cleanup(cleanup)
 	proxy, err := db.OpenLocal(cfg, DB)
 	testutil.Ok(t, err)
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	account, err := rpc.NewAccount(cfg)
 	testutil.Ok(t, err)
 	tracker := NewBalanceTracker(logger, proxy, client, &account)

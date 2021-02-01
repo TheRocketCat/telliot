@@ -19,6 +19,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/contracts"
+	"github.com/tellor-io/telliot/pkg/errors"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
@@ -45,7 +46,11 @@ func NewClient(url string) (contracts.ETHClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &clientInstance{ethClient: client, timeout: timeout, logger: log.With(util.SetupLogger("debug"), "rpc", "client")}, nil
+	filterLogger, err := util.ApplyFilter(*cfg, "rpcNewClient", util.NewLogger())
+	if err != nil {
+		return nil, errors.Wrap(err, "applying filter to logger")
+	}
+	return &clientInstance{ethClient: client, timeout: timeout, logger: log.With(filterLogger, "rpc", "client")}, nil
 }
 
 func (c *clientInstance) withTimeout(ctx context.Context, fn func(*context.Context) error) error {

@@ -17,7 +17,7 @@ import (
 )
 
 func TestABICodec(t *testing.T) {
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 
 	config.OpenTestConfig(t)
 	codec, err := BuildCodec()

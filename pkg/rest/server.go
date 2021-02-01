@@ -15,7 +15,7 @@ import (
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var serverLog = log.With(util.SetupLogger("debug"), "rest", "Server")
+var serverLog = log.With(util.NewLogger(), "rest", "Server")
 
 // Server wraps http server with pre-configured paths.
 type Server struct {

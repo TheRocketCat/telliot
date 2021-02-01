@@ -48,7 +48,7 @@ const (
 	token1FN = "0xd21220a7"
 )
 
-var mockClientLogger = log.With(util.SetupLogger("debug"), "rpc", "mockClient")
+var mockClientLogger = log.With(util.NewLogger(), "rpc", "mockClient")
 
 // CurrentChallenge holds details about the current mining challenge.
 type CurrentChallenge struct {

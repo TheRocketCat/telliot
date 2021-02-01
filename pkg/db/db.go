@@ -10,6 +10,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/tellor-io/telliot/pkg/config"
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
@@ -54,7 +55,12 @@ func Open(file string) (DB, error) {
 		return nil, err
 	}
 
-	i := &impl{db: db, logger: log.With(util.SetupLogger("debug"), "db", "DB")}
+	filterLogger, err := util.ApplyFilter(*config.GetConfig(), "dbDB", util.NewLogger())
+	if err != nil {
+		return nil, err
+	}
+
+	i := &impl{db: db, logger: log.With(filterLogger, "db", "DB")}
 	level.Info(i.logger).Log("msg", "created DB", "at", file)
 	return i, nil
 }

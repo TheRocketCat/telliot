@@ -49,7 +49,7 @@ type remoteImpl struct {
 
 // OpenRemoteDB establishes a proxy to a remote data server.
 func OpenRemoteDB(cfg *config.Config, localDB DB) (DataServerProxy, error) {
-	logger := log.With(util.SetupLogger("debug"), "db", "remoteDb")
+	logger := log.With(util.NewLogger(), "db", "remoteDb")
 
 	privateKey, err := crypto.HexToECDSA(os.Getenv(config.PrivateKeyEnvName))
 	if err != nil {

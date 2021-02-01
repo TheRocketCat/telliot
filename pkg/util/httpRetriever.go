@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var httpFetchLog = log.With(util.SetupLogger("debug"), "util", "HTTPFetchWithRetries")
+var httpFetchLog = log.With(NewLogger(), "util", "HTTPFetchWithRetries")
 
 const (
 	// GET is a GET request type.

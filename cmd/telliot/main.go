@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/alecthomas/kong"
-	"github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	tellorCommon "github.com/tellor-io/telliot/pkg/common"
 	"github.com/tellor-io/telliot/pkg/config"
@@ -25,15 +24,6 @@ func parseConfig(path string) (*config.Config, error) {
 		return nil, errors.Wrapf(err, "parsing config")
 	}
 	return config.GetConfig(), nil
-}
-
-func createLogger(logConfig map[string]string, level string) (log.Logger, error) {
-	err := util.SetupLoggingConfig(logConfig)
-	if err != nil {
-		return nil, errors.Wrapf(err, "parsing log config")
-	}
-	logger := util.SetupLogger(level)
-	return logger, nil
 }
 
 func createTellorVariables(ctx context.Context, cfg *config.Config) (contracts.ETHClient, *contracts.Tellor, *rpc.Account, error) {

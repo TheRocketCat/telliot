@@ -17,7 +17,7 @@ import (
 
 func TestCreateTracker(t *testing.T) {
 
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	cfg := config.OpenTestConfig(t)
 	DB, cleanup := db.OpenTestDB(t)
 	defer t.Cleanup(cleanup)

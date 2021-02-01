@@ -18,7 +18,7 @@ type localProxy struct {
 // OpenLocalProxy creates a local data proxy so that the miner operations are seamless regardless
 // whether accessing data remotely or locally.
 func OpenLocalProxy(localDB DB) (DataServerProxy, error) {
-	logger := log.With(util.SetupLogger("debug"), "db", "LocalDataProxy")
+	logger := log.With(util.NewLogger(), "db", "LocalDataProxy")
 	level.Info(logger).Log("msg", "using local data proxy to pull data from local DB")
 	return &localProxy{localDB: localDB, logger: logger}, nil
 }

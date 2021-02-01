@@ -16,6 +16,7 @@ import (
 	"github.com/tellor-io/telliot/pkg/contracts"
 	"github.com/tellor-io/telliot/pkg/db"
 	"github.com/tellor-io/telliot/pkg/rpc"
+	"github.com/tellor-io/telliot/pkg/util"
 )
 
 // Runner will execute all configured trackers.
@@ -32,6 +33,11 @@ type Runner struct {
 
 // NewRunner will create a new runner instance.
 func NewRunner(logger log.Logger, config *config.Config, db db.DataServerProxy, client contracts.ETHClient, contract *contracts.Tellor, account *rpc.Account) (*Runner, error) {
+	filterLogger, err := util.ApplyFilter(*config, "TrackerRunner", logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "applying filter to logger")
+	}
+
 	return &Runner{
 		config:       config,
 		db:           db,
@@ -39,7 +45,7 @@ func NewRunner(logger log.Logger, config *config.Config, db db.DataServerProxy, 
 		contract:     contract,
 		account:      account,
 		readyChannel: make(chan bool, 1),
-		logger:       log.With(logger, "component", "runner"),
+		logger:       log.With(filterLogger, "component", "runner"),
 		trackerErr: promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "telliot",
 			Subsystem: "tracker",

@@ -20,7 +20,7 @@ import (
 
 func TestDisputeCheckerInRange(t *testing.T) {
 	cfg := config.OpenTestConfig(t)
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	DB, cleanup := db.OpenTestDB(t)
 	client := rpc.NewMockClient()
 	defer t.Cleanup(cleanup)
@@ -43,7 +43,7 @@ func TestDisputeCheckerInRange(t *testing.T) {
 
 func TestDisputeCheckerOutOfRange(t *testing.T) {
 	cfg := config.OpenTestConfig(t)
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 	client := rpc.NewMockClient()
 	contract, err := contracts.NewTellor(client)
 	testutil.Ok(t, err)

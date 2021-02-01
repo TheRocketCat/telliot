@@ -51,12 +51,11 @@ type MiningTasker struct {
 	currChallenge *MiningChallenge
 }
 
-func CreateTasker(cfg *config.Config, proxy db.DataServerProxy) *MiningTasker {
-
+func CreateTasker(logger log.Logger, cfg *config.Config, proxy db.DataServerProxy) *MiningTasker {
 	return &MiningTasker{
 		proxy:  proxy,
 		pubKey: "0x" + cfg.PublicAddress,
-		logger: log.With(util.SetupLogger("debug"), "pow", "MiningTasker"),
+		logger: log.With(logger, "pow", "MiningTasker"),
 	}
 }
 

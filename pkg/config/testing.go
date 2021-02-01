@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/phayes/freeport"
-	"github.com/tellor-io/telliot/pkg/util"
 )
 
 var mainConfig = `
@@ -46,10 +45,6 @@ func OpenTestConfig(t *testing.T) *Config {
 	}
 
 	cfg := GetConfig()
-	err = util.SetupLoggingConfig(cfg.Logger)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	port, err := freeport.GetFreePort()
 	if err != nil {

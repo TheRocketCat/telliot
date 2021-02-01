@@ -40,12 +40,12 @@ type SolutionHandler struct {
 	submitter        tellorCommon.TransactionSubmitter
 }
 
-func CreateSolutionHandler(cfg *config.Config, submitter tellorCommon.TransactionSubmitter, proxy db.DataServerProxy) *SolutionHandler {
+func CreateSolutionHandler(logger log.Logger, cfg *config.Config, submitter tellorCommon.TransactionSubmitter, proxy db.DataServerProxy) *SolutionHandler {
 
 	return &SolutionHandler{
 		proxy:     proxy,
 		submitter: submitter,
-		logger:    log.With(util.SetupLogger("debug"), "pow", "SolutionHandler"),
+		logger:    log.With(logger, "pow", "SolutionHandler"),
 	}
 }
 

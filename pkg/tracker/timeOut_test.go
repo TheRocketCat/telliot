@@ -18,7 +18,7 @@ func TestTimeOutString(t *testing.T) {
 	defer t.Cleanup(cleanup)
 	proxy, err := db.OpenLocal(cfg, DB)
 	testutil.Ok(t, err)
-	logger := util.SetupLogger("debug")
+	logger := util.NewLogger()
 
 	tracker := NewTimeOutTracker(logger, cfg, proxy, nil, nil)
 	res := tracker.String()

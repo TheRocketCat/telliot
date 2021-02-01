@@ -48,7 +48,7 @@ type requestPayload struct {
 	sig []byte
 }
 
-var rrLog log.Logger = log.With(util.SetupLogger("debug"), "db", "RemoteRequest")
+var rrLog log.Logger = log.With(util.NewLogger(), "db", "RemoteRequest")
 
 // Create an outgoing request for the given keys.
 func createRequest(dbKeys []string, values [][]byte, signer RequestSigner) (*requestPayload, error) {

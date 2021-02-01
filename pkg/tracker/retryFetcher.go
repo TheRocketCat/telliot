@@ -21,7 +21,7 @@ func init() {
 	client = http.Client{}
 }
 
-var retryFetchLog = log.With(util.SetupLogger("debug"), "tracker", "fetchWithRetries")
+var retryFetchLog = log.With(util.NewLogger(), "tracker", "fetchWithRetries")
 
 // FetchRequest holds info for a request.
 // TODO: add mock fetch.

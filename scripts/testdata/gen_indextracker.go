@@ -38,10 +38,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = util.SetupLoggingConfig(cfg.Logger)
-	if err != nil {
-		log.Fatal(err)
-	}
 	DB, err := db.Open(filepath.Join(os.TempDir(), "testdata_gen"))
 	if err != nil {
 		log.Fatal(err)

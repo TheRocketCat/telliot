@@ -3,13 +3,7 @@
 
 package util
 
-import (
-	"testing"
-
-	"github.com/pkg/errors"
-	"github.com/tellor-io/telliot/pkg/testutil"
-)
-
+/*
 func TestLogConfig(t *testing.T) {
 	var defaultEntries = map[string]string{
 		"config.Config":            "INFO",
@@ -25,12 +19,13 @@ func TestLogConfig(t *testing.T) {
 		"pow.MiningTasker-1:":      "INFO",
 		"tracker.PSRTracker":       "INFO",
 	}
-	err := SetupLoggingConfig(defaultEntries)
-	testutil.Ok(t, err)
-	cfg := GetLoggingConfig()
-	if cfg.levels["config.Config"] == 0 {
-		testutil.Ok(t, errors.Errorf("Config did not parse correctly: %v", cfg.levels))
-	} else {
-		t.Logf("Parsed log level: %d", cfg.levels["config.Config"])
-	}
+		err := SetupLoggingConfig(defaultEntries)
+		testutil.Ok(t, err)
+		cfg := GetLoggingConfig()
+		if cfg.levels["config.Config"] == 0 {
+			testutil.Ok(t, errors.Errorf("Config did not parse correctly: %v", cfg.levels))
+		} else {
+			t.Logf("Parsed log level: %d", cfg.levels["config.Config"])
+		}
 }
+*/

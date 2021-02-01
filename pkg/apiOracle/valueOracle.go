@@ -18,7 +18,7 @@ import (
 	"github.com/tellor-io/telliot/pkg/util"
 )
 
-var logger = log.With(util.SetupLogger("debug"), "apiOracle", "valueOracle")
+var logger = log.With(util.NewLogger(), "apiOracle", "valueOracle")
 
 // maps symbol to a time window of values.
 var valueHistory map[string]*Window

@@ -5,7 +5,6 @@ package db
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -87,7 +86,7 @@ func OpenLocal(cfg *config.Config, localDB DB) (DataServerProxy, error) {
 
 // OpenRemoteDB establishes a proxy to a remote data server.
 func open(cfg *config.Config, localDB DB, isRemote bool) (DataServerProxy, error) {
-	rdbLog = log.With(util.SetupLogger("debug"), "db", "RemoteDBProxy")
+	rdbLog = log.With(util.NewLogger(), "db", "RemoteDBProxy")
 
 	privateKey, err := crypto.HexToECDSA(os.Getenv(config.PrivateKeyEnvName))
 	if err != nil {
@@ -122,7 +121,7 @@ func open(cfg *config.Config, localDB DB, isRemote bool) (DataServerProxy, error
 		postURL:       url,
 		whitelist:     wlMap,
 		wlHistory:     wlLRU,
-		logger:        log.With(util.SetupLogger("debug"), "db", "RemoteDB"),
+		logger:        log.With(util.NewLogger(), "db", "RemoteDB"),
 		isRemote:      isRemote,
 	}
 	level.Info(i.logger).Log(

@@ -73,12 +73,12 @@ func (n *MiningSetDifficulty) UnmarshalJSON(buf []byte) error {
 	return nil
 }
 
-func CreatePool(cfg *config.Config, group *MiningGroup) *StratumPool {
+func CreatePool(logger log.Logger, cfg *config.Config, group *MiningGroup) *StratumPool {
 	return &StratumPool{
 		url:           cfg.PoolURL,
 		minerAddress:  cfg.PublicAddress + "." + cfg.Worker,
 		minerPassword: cfg.Password,
-		logger:        log.With(util.SetupLogger("debug"), "pow", "StratumPool"),
+		logger:        log.With(logger, "pow", "StratumPool"),
 		group:         group,
 	}
 }
